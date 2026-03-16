@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato Test Interface</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fafaf8; padding: 20px; }
+.container { max-width: 1200px; margin: 0 auto; }
+h1 { font-size: 32px; margin-bottom: 8px; }
+.subtitle { color: #8a8880; font-size: 14px; margin-bottom: 32px; }
+.section { background: #1a1a1a; border: 1px solid #2a2a2a; padding: 24px; margin-bottom: 20px; }
+.section h2 { font-size: 20px; margin-bottom: 16px; color: #f97316; }
+.form-row { margin-bottom: 16px; }
+label { display: block; font-size: 12px; font-weight: 600; color: #8a8880; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+input, select, textarea { width: 100%; padding: 10px 14px; background: #0a0a0a; border: 1px solid #2a2a2a; color: #fafaf8; font-size: 14px; font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #f97316; }
+textarea { min-height: 80px; resize: vertical; }
+button { padding: 12px 24px; background: #f97316; color: #0a0a0a; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+button:hover { background: #ea580c; }
+button:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
+.btn-secondary { background: #2a2a2a; color: #fafaf8; }
+.btn-secondary:hover { background: #3a3a3a; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.market-card { background: #0a0a0a; border: 1px solid #2a2a2a; padding: 16px; }
+.market-card h3 { font-size: 16px; margin-bottom: 8px; line-height: 1.4; }
+.market-meta { display: flex; gap: 16px; margin: 12px 0; font-size: 12px; color: #8a8880; }
+.odds { display: flex; gap: 12px; margin-bottom: 12px; }
+.odd { flex: 1; padding: 8px; text-align: center; background: #1a1a1a; border: 1px solid #2a2a2a; }
+.odd-label { font-size: 10px; color: #8a8880; text-transform: uppercase; letter-spacing: 0.5px; }
+.odd-value { font-size: 20px; font-weight: 600; color: #f97316; margin-top: 4px; }
+.odd.yes .odd-value { color: #10b981; }
+.odd.no .odd-value { color: #ef4444; }
+.trade-form { display: flex; gap: 8px; margin-top: 12px; }
+.trade-form input { flex: 1; }
+.trade-form button { flex-shrink: 0; padding: 10px 16px; font-size: 13px; }
+.status { padding: 12px 16px; border: 1px solid #2a2a2a; margin-bottom: 16px; background: #1a1a1a; font-size: 13px; }
+.status.success { border-color: #10b981; color: #10b981; }
+.status.error { border-color: #ef4444; color: #ef4444; }
+.user-info { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #1a1a1a; border: 1px solid #2a2a2a; margin-bottom: 20px; }
+.user-info strong { color: #f97316; }
+.pool-info { font-size: 11px; color: #666; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🥔 Hot Potato Test Interface</h1>
+  <div class="subtitle">Create markets, place trades, test the AMM</div>
+
+  <div id="status"></div>
+  <div id="userInfo" style="display:none;"></div>
+
+  <!-- LOGIN -->
+  <div class="section" id="loginSection">
+    <h2>1. Create Test User</h2>
+    <div class="form-row">
+      <label>Platform</label>
+      <select id="platform">
+        <option value="twitter">Twitter</option>
+        <option value="tiktok">TikTok</option>
+        <option value="instagram">Instagram</option>
+        <option value="onlyfans">OnlyFans</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Handle</label>
+      <input type="text" id="handle" placeholder="@username" value="@testuser">
+    </div>
+    <div class="form-row">
+      <label>Initial Balance ($)</label>
+      <input type="number" id="balance" value="1000" min="0" step="10">
+    </div>
+    <button onclick="createUser()">Create User & Login</button>
+  </div>
+
+  <!-- CREATE MARKET -->
+  <div class="section" id="createSection" style="display:none;">
+    <h2>2. Create Market</h2>
+    <div class="form-row">
+      <label>Question</label>
+      <textarea id="question" placeholder="Will Bitcoin hit $100K by July?">Will Bitcoin hit $100K by July?</textarea>
+    </div>
+    <div class="form-row">
+      <label>Initial YES odds (%)</label>
+      <input type="number" id="yesOdds" value="60" min="1" max="99">
+    </div>
+    <div class="form-row">
+      <label>Creator Seed Liquidity ($)</label>
+      <input type="number" id="seedLiquidity" value="0" min="0" step="10">
+      <small style="color: #666; font-size: 11px; margin-top: 4px; display: block;">Platform adds $50 automatically</small>
+    </div>
+    <button onclick="createMarket()">Create Market</button>
+  </div>
+
+  <!-- MARKETS -->
+  <div class="section" id="marketsSection" style="display:none;">
+    <h2>3. Markets</h2>
+    <div id="marketsList" class="grid"></div>
+  </div>
+
+</div>
+
+<script>
+let currentUser = null;
+
+function showStatus(message, type = 'success') {
+  const status = document.getElementById('status');
+  status.innerHTML = `<div class="status ${type}">${message}</div>`;
+  setTimeout(() => status.innerHTML = '', 5000);
+}
+
+function updateUserInfo() {
+  if (!currentUser) return;
+  const div = document.getElementById('userInfo');
+  div.style.display = 'block';
+  div.innerHTML = `
+    <div class="user-info">
+      <div>
+        <strong>${currentUser.handle}</strong> · 
+        Balance: $${currentUser.balance.toFixed(2)} · 
+        HP Points: ${currentUser.points.toLocaleString()}
+      </div>
+      <button class="btn-secondary" onclick="logout()">Logout</button>
+    </div>
+  `;
+}
+
+async function createUser() {
+  const platform = document.getElementById('platform').value;
+  const handle = document.getElementById('handle').value.replace('@', '');
+  const balance = parseFloat(document.getElementById('balance').value);
+
+  // Create user directly in backend's in-memory store
+  // Since we can't directly access server memory, we'll use a mock endpoint
+  // For MVP, we'll create user then simulate login via a test endpoint
+  
+  try {
+    // Mock user creation (in real implementation, this would be OAuth)
+    const userId = Math.floor(Math.random() * 1000000);
+    currentUser = {
+      id: userId,
+      platform,
+      handle: '@' + handle,
+      name: handle,
+      points: 100,
+      balance: balance,
+      createdAt: new Date()
+    };
+    
+    // Store in sessionStorage to persist across requests
+    sessionStorage.setItem('testUser', JSON.stringify(currentUser));
+    
+    showStatus(`✅ User created: ${currentUser.handle} with $${balance}`, 'success');
+    
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('createSection').style.display = 'block';
+    document.getElementById('marketsSection').style.display = 'block';
+    updateUserInfo();
+    loadMarkets();
+  } catch (err) {
+    showStatus('❌ Error creating user: ' + err.message, 'error');
+  }
+}
+
+async function createMarket() {
+  if (!currentUser) {
+    showStatus('❌ Please login first', 'error');
+    return;
+  }
+
+  const question = document.getElementById('question').value;
+  const yesOdds = parseInt(document.getElementById('yesOdds').value);
+  const seedLiquidity = parseFloat(document.getElementById('seedLiquidity').value);
+
+  if (!question || question.length < 10) {
+    showStatus('❌ Question must be at least 10 characters', 'error');
+    return;
+  }
+
+  if (seedLiquidity > currentUser.balance) {
+    showStatus('❌ Insufficient balance to seed liquidity', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:3030/api/markets/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        question,
+        yesOdds,
+        seedLiquidity,
+        // Mock session data
+        _mockUser: currentUser
+      })
+    });
+
+    const data = await res.json();
+    
+    if (data.success) {
+      showStatus('✅ Market created! Platform added $50 liquidity', 'success');
+      currentUser.balance -= seedLiquidity;
+      currentUser.points += 100;
+      updateUserInfo();
+      loadMarkets();
+      document.getElementById('question').value = '';
+    } else {
+      showStatus('❌ Error: ' + data.error, 'error');
+    }
+  } catch (err) {
+    showStatus('❌ Network error. Is the backend running on :3030?', 'error');
+    console.error(err);
+  }
+}
+
+async function loadMarkets() {
+  try {
+    const res = await fetch('http://localhost:3030/api/markets', {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    const container = document.getElementById('marketsList');
+    
+    if (!data.markets || data.markets.length === 0) {
+      container.innerHTML = '<p style="color: #666;">No markets yet. Create one above!</p>';
+      return;
+    }
+    
+    container.innerHTML = data.markets.map(m => `
+      <div class="market-card">
+        <h3>${m.question}</h3>
+        <div class="market-meta">
+          <span>Volume: $${m.volume?.toFixed(0) || 0}</span>
+          <span>By ${m.creatorHandle || 'Unknown'}</span>
+        </div>
+        <div class="pool-info">
+          Pools: ${m.yesPool?.toFixed(2)} YES · ${m.noPool?.toFixed(2)} NO · k=${m.k?.toFixed(0)}
+        </div>
+        <div class="odds">
+          <div class="odd yes">
+            <div class="odd-label">YES</div>
+            <div class="odd-value">${m.yesOdds || 50}%</div>
+          </div>
+          <div class="odd no">
+            <div class="odd-label">NO</div>
+            <div class="odd-value">${m.noOdds || 50}%</div>
+          </div>
+        </div>
+        <div class="trade-form">
+          <input type="number" id="amount-${m.id}" placeholder="USD amount" value="10" min="1" step="1">
+          <button onclick="trade(${m.id}, 'yes')">Buy YES</button>
+          <button onclick="trade(${m.id}, 'no')">Buy NO</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    showStatus('❌ Error loading markets', 'error');
+    console.error(err);
+  }
+}
+
+async function trade(marketId, side) {
+  if (!currentUser) {
+    showStatus('❌ Please login first', 'error');
+    return;
+  }
+
+  const amount = parseFloat(document.getElementById(`amount-${marketId}`).value);
+  
+  if (amount <= 0 || amount > currentUser.balance) {
+    showStatus('❌ Invalid amount or insufficient balance', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:3030/api/markets/${marketId}/trade`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        side,
+        amount,
+        _mockUser: currentUser
+      })
+    });
+
+    const data = await res.json();
+    
+    if (data.success) {
+      const shares = data.trade.shares.toFixed(2);
+      const newOdds = data.trade.newOdds;
+      showStatus(`✅ Bought ${shares} ${side.toUpperCase()} shares! New odds: ${newOdds.yesOdds}% YES`, 'success');
+      
+      currentUser.balance = data.user.balance;
+      currentUser.points = data.user.points;
+      updateUserInfo();
+      loadMarkets();
+    } else {
+      showStatus('❌ Error: ' + data.error, 'error');
+    }
+  } catch (err) {
+    showStatus('❌ Network error', 'error');
+    console.error(err);
+  }
+}
+
+function logout() {
+  currentUser = null;
+  sessionStorage.removeItem('testUser');
+  document.getElementById('loginSection').style.display = 'block';
+  document.getElementById('createSection').style.display = 'none';
+  document.getElementById('marketsSection').style.display = 'none';
+  document.getElementById('userInfo').style.display = 'none';
+  showStatus('Logged out', 'success');
+}
+
+// Check for existing session
+window.onload = () => {
+  const stored = sessionStorage.getItem('testUser');
+  if (stored) {
+    currentUser = JSON.parse(stored);
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('createSection').style.display = 'block';
+    document.getElementById('marketsSection').style.display = 'block';
+    updateUserInfo();
+    loadMarkets();
+  }
+};
+
+// Auto-refresh markets every 3 seconds
+setInterval(() => {
+  if (currentUser && document.getElementById('marketsSection').style.display !== 'none') {
+    loadMarkets();
+  }
+}, 3000);
+</script>
+
+</body>
+</html>

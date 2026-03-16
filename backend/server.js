@@ -21,8 +21,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'hot-potato-secret-change-in-prod',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
 
-// Mock user middleware for testing
+// Mock user middleware for testing (must be AFTER session middleware)
 app.use((req, res, next) => {
   if (req.body && req.body._mockUser && process.env.NODE_ENV !== 'production') {
     const mockUser = req.body._mockUser;
@@ -35,15 +44,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'hot-potato-secret-change-in-prod',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-  }
-}));
 
 // In-memory store for MVP (replace with DB later)
 const users = new Map();

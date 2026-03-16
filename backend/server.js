@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Mock user middleware for testing
 app.use((req, res, next) => {
-  if (req.body._mockUser && process.env.NODE_ENV !== 'production') {
+  if (req.body && req.body._mockUser && process.env.NODE_ENV !== 'production') {
     const mockUser = req.body._mockUser;
     // Add or update mock user in store
     if (!req.app.locals.users.has(mockUser.id)) {

@@ -11,7 +11,11 @@ const PORT = process.env.PORT || 3030;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'chrome-extension://*',
+  origin: [
+    'https://daufinder.com',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL || 'chrome-extension://*'
+  ],
   credentials: true
 }));
 app.use(express.json());

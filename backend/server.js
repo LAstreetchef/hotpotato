@@ -6,6 +6,8 @@ const cors = require('cors');
 const session = require('express-session');
 require('dotenv').config();
 
+const pool = require('./db/pool');
+
 const app = express();
 const PORT = process.env.PORT || 3030;
 
@@ -32,54 +34,69 @@ app.use(session({
 }));
 
 // Mock user middleware for testing (must be AFTER session middleware)
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   if (req.body && req.body._mockUser && process.env.NODE_ENV !== 'production') {
     const mockUser = req.body._mockUser;
-    // Add or update mock user in store
-    if (!req.app.locals.users.has(mockUser.id)) {
-      req.app.locals.users.set(mockUser.id, mockUser);
+    try {
+      // Check if user exists in DB
+      const existing = await pool.query('SELECT id FROM users WHERE id = $1', [mockUser.id]);
+      if (existing.rows.length === 0) {
+        // Insert mock user into DB
+        await pool.query(
+          `INSERT INTO users (id, username, display_name, platform, balance, points, is_creator) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO UPDATE SET 
+             balance = EXCLUDED.balance,
+             points = EXCLUDED.points`,
+          [mockUser.id, mockUser.handle, mockUser.name, mockUser.platform, 
+           mockUser.balance, mockUser.points, true]
+        );
+      }
+      // Set session
+      req.session.userId = mockUser.id;
+    } catch (err) {
+      console.error('Mock user creation failed:', err);
     }
-    // Set session
-    req.session.userId = mockUser.id;
   }
   next();
 });
-
-// In-memory store for MVP (replace with DB later)
-const users = new Map();
-const markets = new Map();
-const positions = new Map();
-let marketIdCounter = 1;
-let userIdCounter = 1;
 
 // Routes
 const authRoutes = require('./routes/auth');
 const marketsRoutes = require('./routes/markets');
 const adminRoutes = require('./routes/admin');
+const resolutionRoutes = require('./routes/resolution');
+const portfolioRoutes = require('./routes/portfolio');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/markets', marketsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use(resolutionRoutes);
+app.use(portfolioRoutes);
 
 // Serve static test interface
 app.use(express.static('public'));
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    version: '1.0.0-mvp',
-    users: users.size,
-    markets: markets.size
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const userCount = await pool.query('SELECT COUNT(*) FROM users');
+    const marketCount = await pool.query('SELECT COUNT(*) FROM markets');
+    res.json({ 
+      status: 'ok',
+      version: '1.0.0-fancast',
+      database: 'postgresql',
+      users: parseInt(userCount.rows[0].count),
+      markets: parseInt(marketCount.rows[0].count)
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      error: 'Database connection failed',
+      message: err.message
+    });
+  }
 });
-
-// Export stores for routes to use
-app.locals.users = users;
-app.locals.markets = markets;
-app.locals.positions = positions;
-app.locals.getNextUserId = () => userIdCounter++;
-app.locals.getNextMarketId = () => marketIdCounter++;
 
 // Start server
 app.listen(PORT, () => {

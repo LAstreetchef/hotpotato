@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --black:#0A0A0A;--white:#FAFAF8;--off:#F2F1EE;--rule:#D4D2CC;--muted:#8A8880;--dim:#C8C4BE;
+  --green:#1A7A3C;--red:#B83232;--gold:#8B6914;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'DM Sans',sans-serif;
+}
+html,body{width:380px;height:580px;overflow:hidden;background:var(--white)}
+body{font-family:var(--sans);color:var(--black);display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--rule);flex-shrink:0}
+.tb-logo{display:flex;align-items:center;gap:6px}
+.tb-logo-text{font-family:var(--serif);font-size:16px;font-style:italic}
+.tb-balance{font-family:var(--serif);font-size:18px;font-style:italic;cursor:pointer;letter-spacing:-0.5px}
+.tb-av{width:28px;height:28px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:13px;font-style:italic;color:var(--white);cursor:pointer}
+
+/* NAV */
+.nav{display:flex;border-bottom:1px solid var(--rule);flex-shrink:0}
+.nt{flex:1;padding:9px 4px;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--dim);border-bottom:2px solid transparent;transition:all 0.15s}
+.nt.on{color:var(--black);border-bottom-color:var(--black)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;scrollbar-width:none}
+.main::-webkit-scrollbar{display:none}
+.screen{display:none;height:100%}
+.screen.on{display:flex;flex-direction:column}
+
+/* WALLET GATE */
+.wallet-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;flex:1;gap:16px}
+.wg-potato{font-size:40px;margin-bottom:4px}
+.wg-title{font-family:var(--serif);font-size:22px;font-style:italic;letter-spacing:-0.3px}
+.wg-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:240px}
+.wg-plats{display:flex;flex-direction:column;gap:8px;width:100%}
+.wg-btn{display:flex;align-items:center;gap:10px;padding:11px 16px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:all 0.15s}
+.wg-btn.of{background:#00AFF0;color:white}
+.wg-btn.tt{background:#000;color:white}
+.wg-btn.ig{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:white}
+.wg-btn.wallet{background:var(--black);color:white}
+.wg-btn svg{width:18px;height:18px;flex-shrink:0}
+.wg-divider{display:flex;align-items:center;gap:10px;width:100%}
+.wg-divider-line{flex:1;height:1px;background:var(--rule)}
+.wg-divider-text{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* DISCOVER */
+#s-discover{padding:12px 16px 8px}
+.card-stack{position:relative;flex:1;min-height:0}
+.ccard{position:absolute;inset:0;border:1px solid var(--rule);overflow:hidden;cursor:grab;user-select:none;transform-origin:bottom center;transition:transform 0.3s ease}
+.ccard:active{cursor:grabbing}
+.ccard.c1{z-index:3;transform:rotate(-0.4deg)}
+.ccard.c2{z-index:2;transform:rotate(1deg) translateY(4px) scale(0.97)}
+.ccard.c3{z-index:1;transform:rotate(-0.3deg) translateY(8px) scale(0.94)}
+.cph{width:100%;height:100%;background:var(--off);display:flex;align-items:center;justify-content:center}
+.cimg{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block}
+.cgrad{position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,10,10,0.94) 0%,rgba(10,10,10,0.2) 55%,transparent 100%)}
+.cinfo{position:absolute;bottom:0;left:0;right:0;padding:14px}
+.ctag{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid rgba(255,255,255,0.2);font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:7px}
+.cdot{width:4px;height:4px;border-radius:50%;background:#CC1A1A;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.cname{font-family:var(--serif);font-size:24px;font-style:italic;color:var(--white);letter-spacing:-0.5px;margin-bottom:2px;line-height:1}
+.chandle{font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:10px}
+.card-mkt{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);cursor:pointer}
+.card-mkt-q{font-size:10px;color:rgba(255,255,255,0.82);flex:1;padding-right:8px}
+.card-mkt-pct{font-size:12px;font-weight:600;color:#5FD991;flex-shrink:0}
+.srow{display:flex;justify-content:center;align-items:center;gap:10px;padding:10px 0 0;flex-shrink:0}
+.sw-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sw{display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--rule);background:var(--white);transition:all 0.15s}
+.sw:hover{border-color:var(--black)}
+.sw:active{transform:scale(0.92)}
+.sw.pass{width:40px;height:40px;font-size:14px}
+.sw.boost{width:34px;height:34px;font-size:12px}
+.sw.trade{width:52px;height:52px;font-size:18px;background:var(--black);border-color:var(--black);color:var(--white)}
+.sw.share{width:40px;height:40px;font-size:14px}
+.swlbl{font-size:7px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+
+/* POSITIONS */
+#s-positions{padding:0}
+.pos-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background 0.1s}
+.pos-row:active{background:var(--off)}
+.pos-av{width:36px;height:36px;flex-shrink:0;border-radius:50%;overflow:hidden;background:var(--off)}
+.pos-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.pos-mid{flex:1;min-width:0}
+.pos-name{font-size:13px;font-weight:600}
+.pos-q{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-right{text-align:right;flex-shrink:0}
+.pos-pnl{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.pos-pnl.up{color:var(--green)}
+.pos-pnl.dn{color:var(--red)}
+.pos-pct{font-size:10px;font-weight:500;margin-top:1px}
+.pos-pct.up{color:var(--green)}
+.pos-pct.dn{color:var(--red)}
+.trending-strip{padding:10px 16px;border-bottom:1px solid var(--rule)}
+.ts-label{font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.ts-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.ts-scroll::-webkit-scrollbar{display:none}
+.ts-chip{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--rule);cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:all 0.15s}
+.ts-chip:hover{border-color:var(--black)}
+.ts-face{width:18px;height:18px;border-radius:50%;object-fit:cover;object-position:center top;flex-shrink:0}
+
+/* ROUND */
+#s-round{padding:20px 16px;display:flex;flex-direction:column;justify-content:center}
+.round-eyebrow{font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.round-q{font-family:var(--serif);font-size:20px;font-style:italic;line-height:1.25;margin-bottom:18px}
+.round-timer{font-size:44px;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:3px;line-height:1;margin-bottom:5px}
+.round-timer-bar{height:2px;background:var(--rule);overflow:hidden;margin-bottom:18px}
+.round-timer-fill{height:100%;background:var(--black);transition:width 1s linear}
+.round-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.round-price-lbl{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.round-price-val{font-family:var(--serif);font-size:26px;font-style:italic;letter-spacing:-0.5px}
+.round-holder{font-size:10px;color:var(--muted);margin-bottom:20px}
+.round-holder span{color:var(--black);font-weight:600}
+.round-btn{width:100%;padding:13px;background:var(--black);color:var(--white);border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.round-info-link{text-align:center;font-size:10px;color:var(--muted);cursor:pointer}
+.round-info-link:hover{color:var(--black)}
+
+/* CREATE */
+#s-create{padding:20px 16px;display:flex;flex-direction:column;justify-content:center}
+.create-prompt{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--muted);margin-bottom:10px}
+.create-inp{width:100%;border:none;border-bottom:2px solid var(--black);padding:6px 0;font-family:var(--serif);font-size:18px;font-style:italic;color:var(--black);background:transparent;outline:none;margin-bottom:4px}
+.create-inp::placeholder{color:var(--dim)}
+.create-hint{font-size:9px;color:var(--dim);margin-bottom:24px}
+.create-post-btn{width:100%;padding:13px;background:var(--black);color:var(--white);border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.create-adv{text-align:center;font-size:10px;color:var(--muted);cursor:pointer}
+.create-adv:hover{color:var(--black)}
+
+/* ME */
+#s-me{padding:20px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.me-av{width:60px;height:60px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:26px;font-style:italic;color:var(--white);margin-bottom:10px}
+.me-name{font-family:var(--serif);font-size:20px;font-style:italic;margin-bottom:2px}
+.me-handle{font-size:10px;color:var(--muted);margin-bottom:24px}
+.me-stat-row{display:flex;gap:24px;margin-bottom:28px}
+.me-stat{text-align:center;cursor:pointer}
+.me-sv{font-family:var(--serif);font-size:22px;font-style:italic;letter-spacing:-0.5px}
+.me-sl{font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.me-actions{display:flex;flex-direction:column;gap:6px;width:100%}
+.me-action{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:1px solid var(--rule);cursor:pointer;transition:all 0.15s}
+.me-action:hover{border-color:var(--black);background:var(--off)}
+.me-action-label{font-size:12px;font-weight:500}
+.me-action-val{font-size:11px;color:var(--muted)}
+
+/* MODALS */
+.modal-bg{position:fixed;inset:0;background:rgba(10,10,10,0.5);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--white);width:100%;border-top:1.5px solid var(--black);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);max-height:85vh;overflow-y:auto;scrollbar-width:none}
+.modal::-webkit-scrollbar{display:none}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal-handle{width:28px;height:3px;background:var(--rule);margin:12px auto 0}
+.modal-pad{padding:16px 16px 28px}
+.modal-title{font-family:var(--serif);font-size:20px;font-style:italic;margin-bottom:3px}
+.modal-sub{font-size:10px;color:var(--muted);margin-bottom:16px}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--rule)}
+.mrow:last-child{border-bottom:none}
+.mrow-lbl{font-size:11px;color:var(--muted)}
+.mrow-val{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.mrow-val.up{color:var(--green)}
+.mrow-val.dn{color:var(--red)}
+.trade-sides{display:flex;gap:7px;margin-bottom:14px}
+.trade-side{flex:1;padding:10px;border:1px solid var(--rule);cursor:pointer;text-align:center}
+.trade-side .ts-lbl{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+.trade-side .ts-val{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.trade-side.yes-s.sel,.trade-side.yes-s:hover{border-color:var(--green);background:rgba(26,122,60,0.04)}
+.trade-side.yes-s .ts-val{color:var(--green)}
+.trade-side.no-s.sel,.trade-side.no-s:hover{border-color:var(--red);background:rgba(184,50,50,0.04)}
+.trade-side.no-s .ts-val{color:var(--red)}
+.trade-amount{width:100%;border:none;border-bottom:1.5px solid var(--black);padding:6px 0;font-family:var(--serif);font-size:30px;font-style:italic;text-align:center;background:transparent;outline:none;color:var(--black);margin-bottom:3px}
+.trade-amount-hint{font-size:9px;color:var(--muted);text-align:center;margin-bottom:12px}
+.trade-presets{display:flex;gap:5px;margin-bottom:14px}
+.trade-preset{flex:1;padding:6px;border:1px solid var(--rule);font-size:11px;font-weight:600;cursor:pointer;text-align:center;background:transparent;font-family:var(--sans)}
+.trade-preset:hover{border-color:var(--black)}
+.trade-win-row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--rule);margin-bottom:12px}
+.twl{font-size:10px;color:var(--muted)}
+.twv{font-size:12px;font-weight:600;color:var(--green)}
+.modal-btn{width:100%;padding:12px;background:var(--black);color:var(--white);border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer}
+.modal-btn.ghost{background:transparent;color:var(--black);border:1px solid var(--rule);margin-top:6px}
+.modal-btn.ghost:hover{border-color:var(--black)}
+
+/* CONTEXT BANNER — shown when on OF/TT/IG page */
+.context-banner{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--black);border-bottom:1px solid #1a1a1a;flex-shrink:0;cursor:pointer}
+.cb-av{width:28px;height:28px;border-radius:50%;overflow:hidden;background:#333;flex-shrink:0}
+.cb-av img{width:100%;height:100%;object-fit:cover}
+.cb-info{flex:1}
+.cb-name{font-size:12px;font-weight:600;color:var(--white)}
+.cb-hint{font-size:9px;color:#666}
+.cb-arrow{font-size:12px;color:#666}
+
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--black);color:var(--white);padding:8px 14px;font-size:11px;font-weight:500;opacity:0;transition:all 0.22s;z-index:500;white-space:nowrap;border:1px solid #333;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* WALLET STATUS */
+.wallet-status{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500}
+.ws-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.ws-dot.disconnected{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-logo">
+    <svg width="16" height="20" viewBox="0 0 18 22"><ellipse cx="9" cy="15" rx="7" ry="5.5" fill="#C8914A"/><path d="M8.5 7 Q8 4 7.5 1.5" fill="none" stroke="#4A9A2A" stroke-width="1.5" stroke-linecap="round"/><path d="M7.5 4 Q5 2 3.5 0 Q5.5 1 7.5 3Z" fill="#4A9A2A"/><rect x="4.5" y="11" width="5" height="3.5" rx="2" fill="#111"/><rect x="10" y="11" width="5" height="3.5" rx="2" fill="#111"/><rect x="8.5" y="12.5" width="2.5" height="1" rx="0.5" fill="white" opacity="0.8"/><ellipse cx="9" cy="18" rx="3.5" ry="1.5" fill="#CC1A1A"/></svg>
+    <span class="tb-logo-text">Hot Potato</span>
+  </div>
+  <div class="tb-balance" id="tb-bal" onclick="openModal('m-balance')">$1,247</div>
+  <div class="tb-av" id="tb-av" onclick="switchTab('me',document.querySelector('[data-t=me]'))">K</div>
+</div>
+
+<!-- CONTEXT BANNER (shows when on creator page) -->
+<div class="context-banner" id="ctx-banner" style="display:none">
+  <div class="cb-av"><img id="ctx-av-img" src="" alt=""></div>
+  <div class="cb-info">
+    <div class="cb-name" id="ctx-name">Creator detected</div>
+    <div class="cb-hint">Tap to trade their markets</div>
+  </div>
+  <span class="cb-arrow">→</span>
+</div>
+
+<!-- NAV -->
+<div class="nav" id="main-nav" style="display:none">
+  <div class="nt on" data-t="discover" onclick="switchTab('discover',this)">Discover</div>
+  <div class="nt" data-t="positions" onclick="switchTab('positions',this)">Positions</div>
+  <div class="nt" data-t="round" onclick="switchTab('round',this)">🥔</div>
+  <div class="nt" data-t="create" onclick="switchTab('create',this)">Create</div>
+  <div class="nt" data-t="me" onclick="switchTab('me',this)">Me</div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+  <!-- WALLET GATE (shown when not connected) -->
+  <div id="s-wallet-gate" class="screen on">
+    <div class="wallet-gate">
+      <div class="wg-potato">🥔</div>
+      <div class="wg-title">You are the market now.</div>
+      <div class="wg-sub">Connect your creator account or wallet to start trading in 30 seconds.</div>
+      <div class="wg-plats">
+        <button class="wg-btn of" onclick="connectPlatform('onlyfans')">
+          <svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.8"/><circle cx="9" cy="9" r="3.5" stroke="white" stroke-width="1.8"/></svg>
+          Continue with OnlyFans
+        </button>
+        <button class="wg-btn tt" onclick="connectPlatform('tiktok')">
+          <svg viewBox="0 0 18 18" fill="white"><path d="M14 4.5a3.5 3.5 0 01-2.2-.8 3.5 3.5 0 01-1.3-2.7H8v10a2 2 0 11-2.4-1.95V7A5 5 0 1010 12V8a6.5 6.5 0 002.7.6V6.2A3.5 3.5 0 0114 4.5z"/></svg>
+          Continue with TikTok
+        </button>
+        <button class="wg-btn ig" onclick="connectPlatform('instagram')">
+          <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="4" stroke="white" stroke-width="1.8"/><circle cx="9" cy="9" r="3.5" stroke="white" stroke-width="1.8"/><circle cx="13" cy="5" r="1" fill="white"/></svg>
+          Continue with Instagram
+        </button>
+        <div class="wg-divider"><div class="wg-divider-line"></div><span class="wg-divider-text">or</span><div class="wg-divider-line"></div></div>
+        <button class="wg-btn wallet" onclick="connectWallet()">
+          <svg viewBox="0 0 18 18" fill="none"><rect x="1" y="4" width="16" height="11" rx="2" stroke="white" stroke-width="1.8"/><path d="M1 7h16" stroke="white" stroke-width="1.8"/><circle cx="13.5" cy="11" r="1.5" fill="white"/></svg>
+          Connect Rabby / Wallet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOVER -->
+  <div id="s-discover" class="screen">
+    <div class="card-stack" id="cstack">
+      <div class="ccard c3"><div class="cph" style="background:#2C1A10"><img class="cimg" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=520&fit=crop&crop=focalpoint&fp-y=0.2&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div><div class="cgrad"></div><div class="cinfo"><div class="cname">Zara Moon</div><div class="chandle">@zaramoon · 2.1M</div></div></div>
+      <div class="ccard c2"><div class="cph" style="background:#1A2030"><img class="cimg" src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=520&fit=crop&crop=focalpoint&fp-y=0.25&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div><div class="cgrad"></div><div class="cinfo"><div class="cname">Jake Vega</div><div class="chandle">@jakevega · 890K</div></div></div>
+      <div class="ccard c1"><div class="cph" style="background:#2A1020"><img class="cimg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=520&fit=crop&crop=focalpoint&fp-y=0.3&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div><div class="cgrad"></div>
+        <div class="cinfo">
+          <div class="ctag"><span class="cdot"></span>On Fire</div>
+          <div class="cname">Nova Reyes</div>
+          <div class="chandle">@novareyes · 4.2M</div>
+          <div class="card-mkt" onclick="openTrade('Hits 5M by August?','74')"><span class="card-mkt-q">Hits 5M followers by August?</span><span class="card-mkt-pct">74%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="srow">
+      <div class="sw-wrap"><button class="sw pass" onclick="doSwipe('pass')">✕</button><span class="swlbl">Pass</span></div>
+      <div class="sw-wrap"><button class="sw boost" onclick="toast('⚡ Boosted')">⚡</button><span class="swlbl">Boost</span></div>
+      <div class="sw-wrap"><button class="sw trade" onclick="openTrade('Hits 5M by August?','74')">💸</button><span class="swlbl">Trade</span></div>
+      <div class="sw-wrap"><button class="sw share" onclick="toast('Shared +5 pts')">↗</button><span class="swlbl">Share</span></div>
+    </div>
+  </div>
+
+  <!-- POSITIONS -->
+  <div id="s-positions" class="screen">
+    <div class="trending-strip">
+      <div class="ts-label">Trending now</div>
+      <div class="ts-scroll">
+        <div class="ts-chip" onclick="openTrade('Hits 5M by August?','74')"><img class="ts-face" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=focalpoint&fp-y=0.3&auto=format&q=80" referrerpolicy="no-referrer" alt="">Nova 74%</div>
+        <div class="ts-chip" onclick="openTrade('Sony collab?','52')"><img class="ts-face" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=40&h=40&fit=crop&crop=focalpoint&fp-y=0.2&auto=format&q=80" referrerpolicy="no-referrer" alt="">Zara 52%</div>
+        <div class="ts-chip" onclick="openTrade('Brand deal?','61')"><img class="ts-face" src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=40&h=40&fit=crop&crop=focalpoint&fp-y=0.25&auto=format&q=80" referrerpolicy="no-referrer" alt="">Jake 61%</div>
+      </div>
+    </div>
+    <div class="pos-row" onclick="openModal('m-position','nova')">
+      <div class="pos-av"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=focalpoint&fp-y=0.3&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div>
+      <div class="pos-mid"><div class="pos-name">Nova Reyes</div><div class="pos-q">Hits 5M by August? · YES</div></div>
+      <div class="pos-right"><div class="pos-pnl up">+$42.10</div><div class="pos-pct up">+28%</div></div>
+    </div>
+    <div class="pos-row" onclick="openModal('m-position','zara')">
+      <div class="pos-av"><img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&h=80&fit=crop&crop=focalpoint&fp-y=0.2&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div>
+      <div class="pos-mid"><div class="pos-name">Zara Moon</div><div class="pos-q">Sony collab? · NO</div></div>
+      <div class="pos-right"><div class="pos-pnl dn">−$12.50</div><div class="pos-pct dn">−8%</div></div>
+    </div>
+    <div class="pos-row" onclick="openModal('m-position','jake')">
+      <div class="pos-av"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&h=80&fit=crop&crop=focalpoint&fp-y=0.25&auto=format&q=80" referrerpolicy="no-referrer" alt=""></div>
+      <div class="pos-mid"><div class="pos-name">Jake Vega</div><div class="pos-q">Brand deal? · YES</div></div>
+      <div class="pos-right"><div class="pos-pnl up">+$18.80</div><div class="pos-pct up">+13%</div></div>
+    </div>
+  </div>
+
+  <!-- HOT POTATO ROUND -->
+  <div id="s-round" class="screen">
+    <div class="round-eyebrow">Live Round #142</div>
+    <div class="round-q">"Nova posts a thirst trap before midnight tonight"</div>
+    <div class="round-timer" id="r-timer">04:17</div>
+    <div class="round-timer-bar"><div class="round-timer-fill" id="r-fill" style="width:72%"></div></div>
+    <div class="round-price-row"><span class="round-price-lbl">Next price</span><span class="round-price-val" id="r-price">$4.80</span></div>
+    <div class="round-holder">Held by <span id="r-holder">@crypto_babe99</span></div>
+    <button class="round-btn" onclick="grabPotato()">Grab — $<span id="r-price-btn">4.80</span></button>
+    <div class="round-info-link" onclick="openModal('m-roundinfo')">How it works ↓</div>
+  </div>
+
+  <!-- CREATE -->
+  <div id="s-create" class="screen">
+    <div class="create-prompt">Will I…</div>
+    <input class="create-inp" id="create-q" type="text" placeholder="hit 5M by August?">
+    <div class="create-hint">Tap advanced for odds, date &amp; media</div>
+    <button class="create-post-btn" onclick="publishMarket()">Post Market →</button>
+    <div class="create-adv" onclick="openModal('m-advanced')">Advanced options ↓</div>
+  </div>
+
+  <!-- ME -->
+  <div id="s-me" class="screen">
+    <div class="me-av" id="me-av">K</div>
+    <div class="me-name" id="me-name">Kam L.</div>
+    <div class="me-handle" id="me-handle">@teamflywheel</div>
+    <div class="me-stat-row">
+      <div class="me-stat" onclick="openModal('m-balance')"><div class="me-sv" id="me-bal">$1,247</div><div class="me-sl">Portfolio</div></div>
+      <div class="me-stat" onclick="openModal('m-potato')"><div class="me-sv" id="me-pts">4,820</div><div class="me-sl">HP Points</div></div>
+      <div class="me-stat" onclick="openModal('m-markets')"><div class="me-sv">12</div><div class="me-sl">Markets</div></div>
+    </div>
+    <div class="me-actions">
+      <div class="me-action" onclick="openModal('m-potato')"><span class="me-action-label">$POTATO &amp; token</span><span class="me-action-val">4,820 pts →</span></div>
+      <div class="me-action" onclick="openModal('m-wallet')"><span class="me-action-label">Wallet</span><span class="me-action-val">0x4f…c19a →</span></div>
+      <div class="me-action" onclick="openModal('m-markets')"><span class="me-action-label">My markets</span><span class="me-action-val">$1,370 earned →</span></div>
+      <div class="me-action" onclick="openHPTab()"><span class="me-action-label">Open full site</span><span class="me-action-val">↗</span></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-trade" onclick="bgClose(event,'m-trade')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title" id="mt-title">Nova Reyes</div>
+  <div class="modal-sub" id="mt-q">Hits 5M by August?</div>
+  <div class="trade-sides">
+    <div class="trade-side yes-s sel" id="yes-btn" onclick="pickSide('yes')"><span class="ts-lbl">Yes</span><span class="ts-val" id="yes-odds">74¢</span></div>
+    <div class="trade-side no-s" id="no-btn" onclick="pickSide('no')"><span class="ts-lbl">No</span><span class="ts-val" id="no-odds">26¢</span></div>
+  </div>
+  <input class="trade-amount" type="number" id="t-amt" value="25" min="1" oninput="calcWin()">
+  <div class="trade-amount-hint">Amount in USD</div>
+  <div class="trade-presets">
+    <button class="trade-preset" onclick="setAmt(10)">$10</button>
+    <button class="trade-preset" onclick="setAmt(25)">$25</button>
+    <button class="trade-preset" onclick="setAmt(50)">$50</button>
+    <button class="trade-preset" onclick="setAmt(100)">$100</button>
+  </div>
+  <div class="trade-win-row"><span class="twl">Potential return</span><span class="twv" id="t-win">+$8.78</span></div>
+  <button class="modal-btn" onclick="confirmTrade()">Confirm →</button>
+</div></div></div>
+
+<div class="modal-bg" id="m-balance" onclick="bgClose(event,'m-balance')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">Portfolio</div>
+  <div style="font-family:var(--serif);font-size:38px;font-style:italic;text-align:center;margin:12px 0 4px;letter-spacing:-1.5px" id="bal-big">$1,247</div>
+  <div style="text-align:center;font-size:11px;color:var(--green);font-weight:500;margin-bottom:16px">▲ +$84.20 today</div>
+  <div style="display:flex;gap:7px;margin-bottom:14px">
+    <button style="flex:1;padding:10px;border:1px solid var(--rule);background:transparent;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer" onclick="toast('Send coming soon')">Send</button>
+    <button style="flex:1;padding:10px;border:none;background:var(--black);color:white;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer" onclick="toast('Connecting Rabby…')">Deposit</button>
+  </div>
+  <div class="mrow"><span class="mrow-lbl">Open positions</span><span class="mrow-val">$1,102.30</span></div>
+  <div class="mrow"><span class="mrow-lbl">Cash (USDC)</span><span class="mrow-val">$144.70</span></div>
+  <div class="mrow"><span class="mrow-lbl">Unrealised P&L</span><span class="mrow-val up">+$48.40</span></div>
+  <div class="mrow"><span class="mrow-lbl">Market fees earned</span><span class="mrow-val" style="color:var(--gold)">$1,370</span></div>
+</div></div></div>
+
+<div class="modal-bg" id="m-position" onclick="bgClose(event,'m-position')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title" id="mp-name">Nova Reyes</div>
+  <div class="modal-sub" id="mp-q">Hits 5M by August? · YES @ 68¢</div>
+  <div class="mrow"><span class="mrow-lbl">Invested</span><span class="mrow-val" id="mp-invested">$50.00</span></div>
+  <div class="mrow"><span class="mrow-lbl">Current odds</span><span class="mrow-val" id="mp-current">74¢</span></div>
+  <div class="mrow"><span class="mrow-lbl">P&L</span><span class="mrow-val up" id="mp-pnl">+$42.10</span></div>
+  <div class="mrow"><span class="mrow-lbl">Resolves</span><span class="mrow-val" id="mp-resolves">Aug 31, 2025</span></div>
+  <button class="modal-btn" style="margin-top:12px" onclick="openTrade(document.getElementById('mp-q').textContent,'74');closeModal('m-position')">Add to position →</button>
+  <button class="modal-btn ghost" onclick="toast('Sell order placed');closeModal('m-position')">Sell position</button>
+</div></div></div>
+
+<div class="modal-bg" id="m-potato" onclick="bgClose(event,'m-potato')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">$POTATO</div>
+  <div class="modal-sub">Hot Potato token · Polygon · Phase 1</div>
+  <div style="font-family:var(--serif);font-size:34px;font-style:italic;text-align:center;margin:10px 0 4px" id="pts-big">4,820</div>
+  <div style="text-align:center;font-size:10px;color:var(--gold);font-weight:500;margin-bottom:14px">HP Points → $POTATO at TGE Q4 2025</div>
+  <div class="mrow"><span class="mrow-lbl">Est. value at $0.10</span><span class="mrow-val" style="color:var(--gold)">≈ $482</span></div>
+  <div class="mrow"><span class="mrow-lbl">Holder tier</span><span class="mrow-val">🔥 Hot (25% off fees)</span></div>
+  <button class="modal-btn" style="margin-top:12px;background:var(--dim);cursor:not-allowed" disabled>Lock in at TGE (Q4 2025)</button>
+</div></div></div>
+
+<div class="modal-bg" id="m-wallet" onclick="bgClose(event,'m-wallet')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">Wallet</div>
+  <div class="modal-sub">Polygon · USDC settlement</div>
+  <div class="mrow"><span class="mrow-lbl">Address</span><span class="mrow-val" style="font-family:monospace;font-size:10px">0x4f3a…c19a</span></div>
+  <div class="mrow"><span class="mrow-lbl">USDC balance</span><span class="mrow-val">$144.70</span></div>
+  <div class="mrow"><span class="mrow-lbl">Connected via</span><span class="mrow-val">Rabby</span></div>
+  <button class="modal-btn" style="margin-top:12px" onclick="toast('Connecting Rabby…');closeModal('m-wallet')">Deposit →</button>
+  <button class="modal-btn ghost" onclick="toast('Withdraw coming soon')">Withdraw</button>
+</div></div></div>
+
+<div class="modal-bg" id="m-markets" onclick="bgClose(event,'m-markets')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">My markets</div>
+  <div class="modal-sub">1% of every trade · forever</div>
+  <div class="mrow"><span class="mrow-lbl">"Hits 5M by August?"</span><span class="mrow-val" style="color:var(--gold)">+$910</span></div>
+  <div class="mrow"><span class="mrow-lbl">"Drake collab by EOY?"</span><span class="mrow-val" style="color:var(--gold)">+$340</span></div>
+  <div class="mrow"><span class="mrow-lbl">"Goes live every day?"</span><span class="mrow-val" style="color:var(--gold)">+$120</span></div>
+  <div style="height:1px;background:var(--rule);margin:12px 0"></div>
+  <div class="mrow"><span class="mrow-lbl">Total earned</span><span class="mrow-val" style="font-size:15px;color:var(--gold)">$1,370</span></div>
+  <button class="modal-btn" style="margin-top:12px" onclick="switchTab('create',document.querySelector('[data-t=create]'));closeModal('m-markets')">Create new market →</button>
+</div></div></div>
+
+<div class="modal-bg" id="m-roundinfo" onclick="bgClose(event,'m-roundinfo')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">Hot Potato</div>
+  <div class="modal-sub">Last holder when the clock hits zero wins the pot</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="padding:10px;border:1px solid var(--rule)"><div style="font-family:var(--serif);font-size:20px;font-style:italic;color:var(--rule);margin-bottom:4px">01</div><div style="font-size:11px;font-weight:600;margin-bottom:2px">Buy it</div><div style="font-size:9px;color:var(--muted)">Price up 20% each trade</div></div>
+    <div style="padding:10px;border:1px solid var(--rule)"><div style="font-family:var(--serif);font-size:20px;font-style:italic;color:var(--rule);margin-bottom:4px">02</div><div style="font-size:11px;font-weight:600;margin-bottom:2px">Clock hits zero</div><div style="font-size:9px;color:var(--muted)">Last holder wins pot</div></div>
+    <div style="padding:10px;border:1px solid var(--rule)"><div style="font-family:var(--serif);font-size:20px;font-style:italic;color:var(--rule);margin-bottom:4px">03</div><div style="font-size:11px;font-weight:600;margin-bottom:2px">Pass it fast</div><div style="font-size:9px;color:var(--muted)">Sell before you burn</div></div>
+    <div style="padding:10px;border:1px solid var(--rule)"><div style="font-family:var(--serif);font-size:20px;font-style:italic;color:var(--rule);margin-bottom:4px">04</div><div style="font-size:11px;font-weight:600;margin-bottom:2px">Creator earns</div><div style="font-size:9px;color:var(--muted)">1% every trade always</div></div>
+  </div>
+</div></div></div>
+
+<div class="modal-bg" id="m-advanced" onclick="bgClose(event,'m-advanced')"><div class="modal"><div class="modal-handle"></div><div class="modal-pad">
+  <div class="modal-title">Advanced options</div>
+  <div class="modal-sub">All optional — sensible defaults applied</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rule)"><span style="font-size:12px;font-weight:500">Starting YES odds</span><input type="number" value="60" style="width:70px;border:none;border-bottom:1px solid var(--rule);text-align:right;font-size:13px;background:transparent;outline:none;padding:2px 0"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rule)"><span style="font-size:12px;font-weight:500">Resolves on</span><input type="date" value="2025-08-31" style="border:none;border-bottom:1px solid var(--rule);font-size:12px;background:transparent;outline:none;padding:2px 0"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rule)"><span style="font-size:12px;font-weight:500">Attach media</span><span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="toast('Upload coming soon')">+ Add photo/clip</span></div>
+  <button class="modal-btn" style="margin-top:12px" onclick="publishMarket();closeModal('m-advanced')">Post Market →</button>
+</div></div></div>
+
+<div class="toast" id="toast-el"></div>
+
+<script src="src/popup.js"></script>
+</body>
+</html>

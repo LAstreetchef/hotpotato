@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "name": "Hot Potato",
+  "short_name": "Hot Potato",
+  "description": "Trade prediction markets on your favorite creators. Connect, share, trade.",
+  "version": "1.0.0",
+  "author": "Hot Potato Markets",
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/potato-16.png",
+      "32":  "icons/potato-32.png",
+      "48":  "icons/potato-48.png",
+      "128": "icons/potato-128.png"
+    },
+    "default_title": "Hot Potato — Creator Markets"
+  },
+
+  "icons": {
+    "16":  "icons/potato-16.png",
+    "32":  "icons/potato-32.png",
+    "48":  "icons/potato-48.png",
+    "128": "icons/potato-128.png"
+  },
+
+  "permissions": [
+    "storage",
+    "notifications",
+    "alarms",
+    "activeTab"
+  ],
+
+  "host_permissions": [
+    "https://onlyfans.com/*",
+    "https://www.tiktok.com/*",
+    "https://tiktok.com/*",
+    "https://www.instagram.com/*",
+    "https://instagram.com/*",
+    "https://twitter.com/*",
+    "https://x.com/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://onlyfans.com/*",
+        "https://www.tiktok.com/*",
+        "https://www.instagram.com/*",
+        "https://twitter.com/*",
+        "https://x.com/*"
+      ],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*", "src/content.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
